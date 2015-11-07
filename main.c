@@ -12,6 +12,7 @@ int dataSort[100][30];
 double sourcePro[54][100]; //source
 int sourcePro_sort[54][100] = {0};
 int count;
+double tmp;
 
 int match_index[30] = {0};  // maximal number of match
 double match_data[30][100][2]; // 0 is index of source , 1 is square 
@@ -48,7 +49,7 @@ double calculateSquare(int factor,int source,int method){
 	return value;
 }
 
-void find_source(int factor,int index,int type,int answer[30]){
+void find_source(int factor,int index,int type,int answer[30],int method){
 	int i = 0,find = 0;
 	int source;
 	if(type == 0){
@@ -62,13 +63,13 @@ void find_source(int factor,int index,int type,int answer[30]){
 	for(;i < count;i++){
 		if(source == answer[i]){
 			find = 1;
-			if( calculateSquare(factor,source,0) >= calculateSquare(i,source,0) ){
+			if( calculateSquare(factor,source,method) >= calculateSquare(i,source,method) ){
 				if(type == 0 && index+1 < match_index[factor])
-					find_source(factor,index+1,type,answer);
+					find_source(factor,index+1,type,answer,method);
 				else if(type == 0)
-					find_source(factor,0,1,answer);
+					find_source(factor,0,1,answer,method);
 				else if(type == 1 && index+1 < match_redundant_index[factor])
-					find_source(factor,index+1,type,answer);
+					find_source(factor,index+1,type,answer,method);
 				else{
 					exit(-1);
 				}					
@@ -76,13 +77,33 @@ void find_source(int factor,int index,int type,int answer[30]){
 			else{
 				answer[factor] = source;
 				answer[i] = -1;
-				find_source(i,0,0,answer);
+				find_source(i,0,0,answer,method);
 			}
 			break;
 		}
 	}
 	if(!find){
 		answer[factor] = source;
+	}
+}
+
+void sortTwoArray(int len ,int ascending ,double (*array)[2]){
+	int i,j;
+	if(ascending){
+		for(i = 0;i < len-1;i++)
+			for(j = len-1;j > i;j--)
+				if(array[j][1] < array[j-1][1]){
+					SWAP(array[j][1],array[j-1][1]);
+					SWAP(array[j][0],array[j-1][0]);
+				}
+	}
+	else{
+		for(i = 0;i < len-1;i++)
+			for(j = len-1;j > i;j--)
+				if(array[j][1] > array[j-1][1]){
+					SWAP(array[j][1],array[j-1][1]);
+					SWAP(array[j][0],array[j-1][0]);
+				}
 	}
 }
 
@@ -93,7 +114,6 @@ int main(int argc, char* argv[])
 	char bufferC = 0;
 	int bufferInt;
 	double dataCopy[100][30];
-	double tmp;
 	int i = 0,j = 0,k = 0;
 	char sourceName[100][100];
 	/*double x =0.0;
@@ -212,13 +232,7 @@ int main(int argc, char* argv[])
 					SWAP(sourcePro_copy[i][k],sourcePro_copy[i-1][k]);
 					SWAP(sourcePro_sort[i][k],sourcePro_sort[i-1][k]);
 				}
-	/*
-	printf("\n");
-	for(j = 0;j < sourceLength;j++){
-		for(i = 0;i < 54;i++)
-			printf("%d ",sourcePro_sort[i][j]);
-		printf("\n");
-	}*/
+
 	int factor_p = 0, source_p = 0;
 	int match = 0;
 	
@@ -249,14 +263,8 @@ int main(int argc, char* argv[])
 				match_index[i]++;
 			}
 		}
+		sortTwoArray(match_index[i],1,match_data[i]);
 	}
-	for(i = 0;i < count;i++)
-		for(j = 0;j < match_index[i]-1;j++)
-			for(k = match_index[i]-1;k > j;k--)
-				if(match_data[i][k-1][1] > match_data[i][k][1]){
-					SWAP(match_data[i][k-1][1],match_data[i][k][1]);
-					SWAP(match_data[i][k-1][0],match_data[i][k][0]);
-				}
 	
 	printf("\n============\nalgo.2 second phrase\n============\n\n");
 	//2.算出篩選之source跟factor match到物種的平方和平均，選出平方和平均最小的source
@@ -287,20 +295,15 @@ int main(int argc, char* argv[])
 	
 	printf("\n============\nalgo.2 third phrase\n============\n\n");
 	//若大小相同，則比較factor最大物種的平方和大小
-	for(i = 0;i < count;i++)
+	for(i = 0;i < count;i++){
 		for(j = 0;j < square_min_index[i];j++){
 			square_min_in_factor[i][j][1] = calculateSquare(i,square_min_in_factor[i][j][0],0);
 			//printf("**%lf\n",square_min_in_factor[i][j][1]);
 			}
-	for(i = 0;i < count;i++)
-		for(j = 0;j < square_min_index[i]-1;j++)
-			for(k = square_min_index[i]-1;k > j;k--)
-				if(square_min_in_factor[i][k-1][1] > square_min_in_factor[i][k][1]){
-					SWAP(square_min_in_factor[i][k-1][1],square_min_in_factor[i][k][1]);
-					SWAP(square_min_in_factor[i][k-1][0],square_min_in_factor[i][k][0]);
-				}
-				
-	for(i = 0;i < count;i++)			
+		sortTwoArray(square_min_index[i],1,square_min_in_factor[i]);
+	}
+
+	for(i = 0;i < count;i++){			
 		for(j = 0;j < sourceLength;j++){
 			int max_pollution = dataSort[0][i];
 			if(sourcePro[max_pollution][j] != -999){ 
@@ -311,57 +314,43 @@ int main(int argc, char* argv[])
 				match_redundant_index[i]++;
 				}
 		}
-	
-	for(i = 0;i < count;i++)
-		for(j = 0;j < match_redundant_index[i]-1;j++)
-			for(k = match_redundant_index[i]-1;k > j;k--)
-				if(match_redundant_data[i][k-1][1] > match_redundant_data[i][k][1]){
-					SWAP(match_redundant_data[i][k-1][1],match_redundant_data[i][k][1]);
-					SWAP(match_redundant_data[i][k-1][0],match_redundant_data[i][k][0]);
-				}		
-				
+		sortTwoArray(match_redundant_index[i],1,match_redundant_data[i]);
+	}
+
 	int answer[30];
 	memset(answer,-1,sizeof(answer));
 	
 	for(i=0;i<count;i++)
 		if(square_min_index[i]!=0)
-			find_source(i,0,0,answer);
+			find_source(i,0,0,answer,0);
 		
 	for(i=0;i<count;i++)
 		printf("---factor:%d---\n%s\n",i,sourceName[answer[i]]);
 	
 	printf("\n============\nalgo.3 third phrase\n============\n\n");
 	//若大小相同，則比較所有物種之平方和平均。
-	for(i=0;i<count;i++)
+	
+	for(i=0;i<count;i++){
 		for(j = 0; j < square_min_index[i];j++)
 			square_min_in_factor[i][j][1] = calculateSquare(i,square_min_in_factor[i][j][0],1);
-	
-	for(i = 0;i < count;i++)
-		for(j = 0;j < square_min_index[i]-1;j++)
-			for(k = square_min_index[i]-1;k > j;k--)
-				if(square_min_in_factor[i][k-1][1] > square_min_in_factor[i][k][1]){
-					SWAP(square_min_in_factor[i][k-1][1],square_min_in_factor[i][k][1]);
-					SWAP(square_min_in_factor[i][k-1][0],square_min_in_factor[i][k][0]);
-				}
-	for(i = 0;i < 30;i++)	
+		sortTwoArray(square_min_index[i],1,square_min_in_factor[i]);
+	}
+
+	for(i = 0;i < count;i++){		
 		match_redundant_index[i] = 0;
-	for(i = 0;i < count;i++)			
 		for(j = 0;j < sourceLength;j++){
 			match_redundant_data[i][match_redundant_index[i]][0] = j;
 			match_redundant_data[i][match_redundant_index[i]][1] = calculateSquare(i,j,1);
 			match_redundant_index[i]++;
 		}
-	for(i = 0;i < count;i++)
-		for(j = 0;j < match_redundant_index[i]-1;j++)
-			for(k = match_redundant_index[i]-1;k > j;k--)
-				if(match_redundant_data[i][k-1][1] > match_redundant_data[i][k][1]){
-					SWAP(match_redundant_data[i][k-1][1],match_redundant_data[i][k][1]);
-					SWAP(match_redundant_data[i][k-1][0],match_redundant_data[i][k][0]);
-				}
+		sortTwoArray(match_redundant_index[i],1,match_redundant_data[i]);
+	}
+
 	memset(answer,-1,sizeof(answer));
+	
 	for(i=0;i<count;i++)
 		if(square_min_index[i]!=0)
-			find_source(i,0,0,answer);
+			find_source(i,0,0,answer,1);
 		
 	for(i=0;i<count;i++)
 		printf("---factor:%d---\n%s\n",i,sourceName[answer[i]]);

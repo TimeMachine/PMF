@@ -57,8 +57,8 @@ void find_source(int factor,int index,int type,int answer[30],int method){
 		//printf("%d , %d , %d , %d , %lf\n",factor,index,type,source,match_data[factor][index][1]);
 	}
 	else{
-		source = match_redundant_data[index][factor][0];
-		//printf("%d , %d , %d , %d , %lf\n",factor,index,type,source,match_redundant_data[index][factor][1]);
+		source = match_redundant_data[factor][index][0];
+		//printf("%d , %d , %d , %d , %lf\n",factor,index,type,source,match_redundant_data[factor][index][1]);
 	}
 	for(;i < count;i++){
 		if(source == answer[i]){
@@ -71,6 +71,7 @@ void find_source(int factor,int index,int type,int answer[30],int method){
 				else if(type == 1 && index+1 < match_redundant_index[factor])
 					find_source(factor,index+1,type,answer,method);
 				else{
+					printf("ERROR");
 					exit(-1);
 				}					
 			}
@@ -296,17 +297,21 @@ int main(int argc, char* argv[])
 	printf("\n============\nalgo.2 third phrase\n============\n\n");
 	//若大小相同，則比較factor最大物種的平方和大小
 	for(i = 0;i < count;i++){
-		for(j = 0;j < square_min_index[i];j++){
-			square_min_in_factor[i][j][1] = calculateSquare(i,square_min_in_factor[i][j][0],0);
+		for(j = 0;j < match_index[i];j++){
+			match_data[i][j][1] = calculateSquare(i,match_data[i][j][0],0);
 			//printf("**%lf\n",square_min_in_factor[i][j][1]);
 			}
-		sortTwoArray(square_min_index[i],1,square_min_in_factor[i]);
+		sortTwoArray(match_index[i],1,match_data[i]);
 	}
 
-	for(i = 0;i < count;i++){			
+	for(i = 0;i < count;i++){	
 		for(j = 0;j < sourceLength;j++){
 			int max_pollution = dataSort[0][i];
-			if(sourcePro[max_pollution][j] != -999){ 
+			int in_match_data = 0;
+			for(k = 0;k < match_index[i];k++)
+				if(match_data[i][k][0] == j)
+					in_match_data = 1;
+			if(sourcePro[max_pollution][j] != -999 && !in_match_data){ 
 				match_redundant_data[i][match_redundant_index[i]][0] = j;
 				double r = data[max_pollution][i] - sourcePro[max_pollution][j];
 				r *= r;
@@ -321,7 +326,7 @@ int main(int argc, char* argv[])
 	memset(answer,-1,sizeof(answer));
 	
 	for(i=0;i<count;i++)
-		if(square_min_index[i]!=0)
+		if(match_index[i]!=0)
 			find_source(i,0,0,answer,0);
 		
 	for(i=0;i<count;i++)
@@ -331,25 +336,30 @@ int main(int argc, char* argv[])
 	//若大小相同，則比較所有物種之平方和平均。
 	
 	for(i=0;i<count;i++){
-		for(j = 0; j < square_min_index[i];j++)
-			square_min_in_factor[i][j][1] = calculateSquare(i,square_min_in_factor[i][j][0],1);
-		sortTwoArray(square_min_index[i],1,square_min_in_factor[i]);
+		for(j = 0; j < match_index[i];j++)
+			match_data[i][j][1] = calculateSquare(i,match_data[i][j][0],1);
+		sortTwoArray(match_index[i],1,match_data[i]);
 	}
 
 	for(i = 0;i < count;i++){		
 		match_redundant_index[i] = 0;
-		for(j = 0;j < sourceLength;j++){
-			match_redundant_data[i][match_redundant_index[i]][0] = j;
-			match_redundant_data[i][match_redundant_index[i]][1] = calculateSquare(i,j,1);
-			match_redundant_index[i]++;
-		}
+		int in_match_data = 0;
+		for(k = 0;k < match_index[i];k++)
+			if(match_data[i][k][0] == j)
+				in_match_data = 1;
+		if(!in_match_data)
+			for(j = 0;j < sourceLength;j++){
+				match_redundant_data[i][match_redundant_index[i]][0] = j;
+				match_redundant_data[i][match_redundant_index[i]][1] = calculateSquare(i,j,1);
+				match_redundant_index[i]++;
+			}
 		sortTwoArray(match_redundant_index[i],1,match_redundant_data[i]);
 	}
 
 	memset(answer,-1,sizeof(answer));
 	
 	for(i=0;i<count;i++)
-		if(square_min_index[i]!=0)
+		if(match_index[i]!=0)
 			find_source(i,0,0,answer,1);
 		
 	for(i=0;i<count;i++)

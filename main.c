@@ -3,26 +3,31 @@
 #include<math.h>
 #include<string.h>
 #define SWAP(x, y) tmp = x; x = y; y = tmp;
-#define sourceLength 14
+#define sourceBuffer 30
+#define pollutionBuffer 100
+#define factorBuffer 30
 #define Number_find_pollution 6
 #define Number_match 2
 
-double data[100][30]; //output3fac_profiles
-int dataSort[100][30];
-double sourcePro[54][100]; //source
-int sourcePro_sort[54][100] = {0};
-int count;
+double data[pollutionBuffer][factorBuffer]; //output3fac_profiles
+int dataSort[pollutionBuffer][factorBuffer];
+double sourcePro[pollutionBuffer][sourceBuffer]; //source
+int sourcePro_sort[pollutionBuffer][sourceBuffer] = {0};
+int factorCount;
+int pollutionCount;
+int sourceCount;
 double tmp;
+char sourceName[sourceBuffer][100];
 
-int match_index[30] = {0};  // maximal number of match
-double match_data[30][100][2]; // 0 is index of source , 1 is square 
-int max_match_pollution[30][100];
+int match_index[factorBuffer] = {0};  // maximal number of match
+double match_data[factorBuffer][100][2]; // 0 is index of source , 1 is square 
+int max_match_pollution[factorBuffer][100];
 
-int square_min_index[30];
-double square_min_in_factor[30][100][2]; //index of source
+int square_min_index[factorBuffer];
+double square_min_in_factor[factorBuffer][100][2]; //index of source
 
-int match_redundant_index[30];
-double match_redundant_data[30][100][2]; //source only have the maximal pollution and sort by square
+int match_redundant_index[factorBuffer];
+double match_redundant_data[factorBuffer][100][2]; //source only have the maximal pollution and sort by square
 
 double calculateSquare(int factor,int source,int method){
 	//method 0 is factor最大物種的平方和大小 , method 1 is 所有物種之平方和平均
@@ -37,7 +42,7 @@ double calculateSquare(int factor,int source,int method){
 		int avg_count = 0;
 		int i = 0;
 		double sum = 0;
-		for(i=0;i<54;i++)
+		for(i=0;i<pollutionCount;i++)
 			if(sourcePro[i][source]!=-999){
 				double r = data[i][factor] - sourcePro[i][source];
 				r*=r;
@@ -49,7 +54,7 @@ double calculateSquare(int factor,int source,int method){
 	return value;
 }
 
-void find_source(int factor,int index,int type,int answer[30],int method){
+void find_source(int factor,int index,int type,int answer[factorBuffer],int method){
 	int i = 0,find = 0;
 	int source;
 	if(type == 0){
@@ -60,7 +65,7 @@ void find_source(int factor,int index,int type,int answer[30],int method){
 		source = match_redundant_data[factor][index][0];
 		//printf("%d , %d , %d , %d , %lf\n",factor,index,type,source,match_redundant_data[factor][index][1]);
 	}
-	for(;i < count;i++){
+	for(;i < factorCount;i++){
 		if(source == answer[i]){
 			find = 1;
 			if( calculateSquare(factor,source,method) >= calculateSquare(i,source,method) ){
@@ -108,59 +113,64 @@ void sortTwoArray(int len ,int ascending ,double (*array)[2]){
 	}
 }
 
-int main(int argc, char* argv[])
-{
+void readFile(char* argv[]){
 	FILE*fptr,*fptr2;
 	char buffer[1000];
 	char bufferC = 0;
 	int bufferInt;
-	double dataCopy[100][30];
 	int i = 0,j = 0,k = 0;
-	char sourceName[100][100];
-	/*double x =0.0;
-	scanf("%lE",&x);
-	printf("%lf",x);*/
-	
-	// data read
-	{
+	// data read	
 	fptr = fopen(argv[1],"r");
     if(fptr == NULL){
         printf("open failure");
-        return 1;
+        exit(-1);
     }else{
-		for(;i < 114; i++){
-			while(bufferC != '\n'){
+		for(i = 0;i < 3;i++){
+			while(strcmp(buffer,"Profiles")){
 				fscanf(fptr,"%s%c",buffer,&bufferC);
 			}
-			bufferC = 0; 
-			//printf("%s\n",buffer);
+			strcpy(buffer,"");
 		}
-		for(i = 0;i < 54;i++){
+		bufferC = 0; 
+		for(i = 0;i < 2;i++){
+			while(bufferC != '\n'){
+				fscanf(fptr,"%s%c",buffer,&bufferC);
+				//printf("%s\n",buffer);
+			}
+			bufferC = 0; 
+		}
+		//printf("%s\n",buffer);
+		i = 0;
+		pollutionCount = 0;
+		while(1){
 			bufferC = 0;
 			j = 0;
-			fscanf(fptr,"%d %s",&bufferInt,buffer);
+			if(fscanf(fptr,"%d %s",&bufferInt,buffer)==EOF)
+				break;
 			//printf("%s\n",buffer);
 			while(bufferC != '\n'){
 				fscanf(fptr,"%lE%c",&data[i][j],&bufferC);
 				//printf("%lf ",data[i][j]);
 				j++;
-				count = j;
+				factorCount = j;
 			}
+			i++;
+			pollutionCount++;
 		}
     }
 	//data = data / n-butane
-    for (j = 0; j < count; j++) {
-        for (i = 0; i < 54; i++) {
+    for (j = 0; j < factorCount; j++) {
+        for (i = 0; i < pollutionCount; i++) {
             data[i][j] = data[i][j]/data[5][j];
         }
     }
-	}
+	
 	//source profile read
-	{
+	
 	fptr2 = fopen(argv[2],"r");
 	 if(fptr2 == NULL){
         printf("open failure");
-        return 1;
+        exit(-1);
     }else{
 		bufferC = 0; 
 		while(bufferC != '\n'){
@@ -168,14 +178,16 @@ int main(int argc, char* argv[])
 			//printf("%s\n",buffer);
 		}
 		bufferC = 0; 
-		for(i = 0;i < sourceLength;i++){
-			bufferC = 0; 
-			j = 0;
-			for(k = 0;k < 1000;k++)
-				buffer[k] = '\0';
+		int end = 0;
+		i = 0;
+		while(1){
+			memset(buffer,'\0',sizeof(buffer));
 			int nonfirst = 0;
 			while(!(buffer[0] >= '0' && buffer[0] <= '9')){
-				fscanf(fptr2,"%s",buffer);
+				if(fscanf(fptr2,"%s",buffer) == EOF){
+					end  = 1;
+					break;
+				}
 				if(!(buffer[0] >= '0' && buffer[0] <= '9')){
 					if(nonfirst)
 						strcat(sourceName[i]," ");
@@ -184,29 +196,47 @@ int main(int argc, char* argv[])
 				}
 				//printf("%s",buffer);
 			}
+			if(end)
+				break;
+			bufferC = 0;
+			j = 0;
 			while(bufferC != '\n'){
 				fscanf(fptr2,"%lf%c",&sourcePro[j][i],&bufferC);
 				//printf("%lf %c",sourcePro[j][i],bufferC);
 				j++;
 			}
+			if(j!=pollutionCount){
+				printf("number of pollution of fac_profiles and source are not the same\n");
+				exit(-1);
+			}
+			i++;
+			sourceCount++;
 		}
 	}
-	}
+	fclose(fptr);
+	fclose(fptr2);
+}
+
+int main(int argc, char* argv[])
+{
+	double dataCopy[100][factorBuffer];
+	int i = 0,j = 0,k = 0;
+	readFile(argv);	
 	printf("\n============\nalgo.2 first phrase\n============\n\n");
 	//1.sort各個source的污染物(由大大小)，篩出source前三大與factor前三大至少有兩個為同一種物種的source
-	for(i = 0;i < 54;i++){
-		for(j = 0;j < count;j++){
+	for(i = 0;i < pollutionCount;i++){
+		for(j = 0;j < factorCount;j++){
 			dataCopy[i][j] = data[i][j];//copy data for sorting
 		}
 	}
-	for(i = 0;i < 54;i++){
-		for(j = 0;j < count;j++){
-			dataSort[i][j] = i;//assign 0~53 to memorize what pollutants is that
+	for(i = 0;i < pollutionCount;i++){
+		for(j = 0;j < factorCount;j++){
+			dataSort[i][j] = i;//assign 0~pollutionCount-1 to memorize what pollutants is that
 		}
 	}
-	for(k = 0;k < count;k++){
-		for(j = 0; j < 53;j++){
-			for(i = 53;i > j;i--){
+	for(k = 0;k < factorCount;k++){
+		for(j = 0; j < pollutionCount-1;j++){
+			for(i = pollutionCount-1;i > j;i--){
 				if(dataCopy[i][k] > dataCopy[i-1][k]){
 					SWAP(dataCopy[i][k],dataCopy[i-1][k]);
 					SWAP(dataSort[i][k],dataSort[i-1][k]);
@@ -217,18 +247,18 @@ int main(int argc, char* argv[])
 		//printf("\n");
 	}
 	
-	double sourcePro_copy[54][100] = {0};
-	for(j = 0;j < sourceLength;j++)
-		for(i = 0;i < 54;i++)
+	double sourcePro_copy[pollutionBuffer][100] = {0};
+	for(j = 0;j < sourceCount;j++)
+		for(i = 0;i < pollutionCount;i++)
 			sourcePro_copy[i][j] = sourcePro[i][j];
 		
-	for(j = 0;j < sourceLength;j++)
-		for(i = 0;i < 54;i++)
+	for(j = 0;j < sourceCount;j++)
+		for(i = 0;i < pollutionCount;i++)
 			sourcePro_sort[i][j] = i;
 		
-	for(k = 0;k < sourceLength;k++)
-		for(j = 0;j < 53;j++)
-			for(i = 53;i > j;i--)
+	for(k = 0;k < sourceCount;k++)
+		for(j = 0;j < pollutionCount-1;j++)
+			for(i = pollutionCount-1;i > j;i--)
 				if(sourcePro_copy[i][k] > sourcePro_copy[i-1][k]){
 					SWAP(sourcePro_copy[i][k],sourcePro_copy[i-1][k]);
 					SWAP(sourcePro_sort[i][k],sourcePro_sort[i-1][k]);
@@ -237,12 +267,12 @@ int main(int argc, char* argv[])
 	int factor_p = 0, source_p = 0;
 	int match = 0;
 	
-	for(i=0;i<30;i++)
+	for(i=0;i<factorBuffer;i++)
 		for(j=0;j<100;j++)
 			max_match_pollution[i][j] = 999;
-	for(i=0;i<count;i++){
+	for(i=0;i<factorCount;i++){
 		printf("---factor:%d---\n",i);
-		for(j = 0; j < sourceLength;j++){
+		for(j = 0; j < sourceCount;j++){
 			match = 0;
 			match_data[i][match_index[i]][1] = 0;
 			max_match_pollution[i][j] = 999;
@@ -269,11 +299,11 @@ int main(int argc, char* argv[])
 	
 	printf("\n============\nalgo.2 second phrase\n============\n\n");
 	//2.算出篩選之source跟factor match到物種的平方和平均，選出平方和平均最小的source
-	for(i=0;i<30;i++)
+	for(i=0;i<factorBuffer;i++)
 		for(j=0;j<100;j++)
 			square_min_in_factor[i][j][0] = -1;
 
-	for(i=0;i<count;i++){
+	for(i=0;i<factorCount;i++){
 		printf("---factor:%d---\n",i);
 		square_min_index[i] = 0;
 		double min = 9999;
@@ -296,7 +326,7 @@ int main(int argc, char* argv[])
 	
 	printf("\n============\nalgo.2 third phrase\n============\n\n");
 	//若大小相同，則比較factor最大物種的平方和大小
-	for(i = 0;i < count;i++){
+	for(i = 0;i < factorCount;i++){
 		for(j = 0;j < match_index[i];j++){
 			match_data[i][j][1] = calculateSquare(i,match_data[i][j][0],0);
 			//printf("**%lf\n",square_min_in_factor[i][j][1]);
@@ -304,8 +334,8 @@ int main(int argc, char* argv[])
 		sortTwoArray(match_index[i],1,match_data[i]);
 	}
 
-	for(i = 0;i < count;i++){	
-		for(j = 0;j < sourceLength;j++){
+	for(i = 0;i < factorCount;i++){	
+		for(j = 0;j < sourceCount;j++){
 			int max_pollution = dataSort[0][i];
 			int in_match_data = 0;
 			for(k = 0;k < match_index[i];k++)
@@ -322,33 +352,33 @@ int main(int argc, char* argv[])
 		sortTwoArray(match_redundant_index[i],1,match_redundant_data[i]);
 	}
 
-	int answer[30];
+	int answer[factorBuffer];
 	memset(answer,-1,sizeof(answer));
 	
-	for(i=0;i<count;i++)
+	for(i=0;i<factorCount;i++)
 		if(match_index[i]!=0)
 			find_source(i,0,0,answer,0);
 		
-	for(i=0;i<count;i++)
+	for(i=0;i<factorCount;i++)
 		printf("---factor:%d---\n%s\n",i,sourceName[answer[i]]);
 	
 	printf("\n============\nalgo.3 third phrase\n============\n\n");
 	//若大小相同，則比較所有物種之平方和平均。
 	
-	for(i=0;i<count;i++){
+	for(i=0;i<factorCount;i++){
 		for(j = 0; j < match_index[i];j++)
 			match_data[i][j][1] = calculateSquare(i,match_data[i][j][0],1);
 		sortTwoArray(match_index[i],1,match_data[i]);
 	}
 
-	for(i = 0;i < count;i++){		
+	for(i = 0;i < factorCount;i++){		
 		match_redundant_index[i] = 0;
 		int in_match_data = 0;
 		for(k = 0;k < match_index[i];k++)
 			if(match_data[i][k][0] == j)
 				in_match_data = 1;
 		if(!in_match_data)
-			for(j = 0;j < sourceLength;j++){
+			for(j = 0;j < sourceCount;j++){
 				match_redundant_data[i][match_redundant_index[i]][0] = j;
 				match_redundant_data[i][match_redundant_index[i]][1] = calculateSquare(i,j,1);
 				match_redundant_index[i]++;
@@ -358,11 +388,11 @@ int main(int argc, char* argv[])
 
 	memset(answer,-1,sizeof(answer));
 	
-	for(i=0;i<count;i++)
+	for(i=0;i<factorCount;i++)
 		if(match_index[i]!=0)
 			find_source(i,0,0,answer,1);
 		
-	for(i=0;i<count;i++)
+	for(i=0;i<factorCount;i++)
 		printf("---factor:%d---\n%s\n",i,sourceName[answer[i]]);
 	return 0;
 }

@@ -1,0 +1,1 @@
+Input have to be used encoding of ANSI.

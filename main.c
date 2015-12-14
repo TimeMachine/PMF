@@ -29,6 +29,16 @@ double square_min_in_factor[factorBuffer][100][2]; //index of source
 int match_redundant_index[factorBuffer];
 double match_redundant_data[factorBuffer][100][2]; //source only have the maximal pollution and sort by square
 
+char getOS(){
+	#if defined _WIN32 || defined _WIN64
+	return '\n';
+	#elif __APPLE__ || __MACH__
+	return '\r';
+	#else
+    return '\0';
+    #endif
+}
+
 double calculateSquare(int factor,int source,int method){
 	//method 0 is factor最大物種的平方和大小 , method 1 is 所有物種之平方和平均
 	double value = 0;
@@ -119,6 +129,7 @@ void readFile(char* argv[]){
 	char bufferC = 0;
 	int bufferInt;
 	int i = 0,j = 0,k = 0;
+	char token = getOS();
 	// data read	
 	fptr = fopen(argv[1],"r");
     if(fptr == NULL){
@@ -133,7 +144,7 @@ void readFile(char* argv[]){
 		}
 		bufferC = 0; 
 		for(i = 0;i < 2;i++){
-			while(bufferC != '\n'){
+			while(bufferC != token){
 				fscanf(fptr,"%s%c",buffer,&bufferC);
 				//printf("%s\n",buffer);
 			}
@@ -148,7 +159,7 @@ void readFile(char* argv[]){
 			if(fscanf(fptr,"%d %s",&bufferInt,buffer)==EOF)
 				break;
 			//printf("%s\n",buffer);
-			while(bufferC != '\n'){
+			while(bufferC != token){
 				fscanf(fptr,"%lE%c",&data[i][j],&bufferC);
 				//printf("%lf ",data[i][j]);
 				j++;
@@ -173,7 +184,7 @@ void readFile(char* argv[]){
         exit(-1);
     }else{
 		bufferC = 0; 
-		while(bufferC != '\n'){
+		while(bufferC != token){
 			fscanf(fptr2,"%s%c",buffer,&bufferC);
 			//printf("%s\n",buffer);
 		}
@@ -200,7 +211,7 @@ void readFile(char* argv[]){
 				break;
 			bufferC = 0;
 			j = 0;
-			while(bufferC != '\n'){
+			while(bufferC != token){
 				fscanf(fptr2,"%lf%c",&sourcePro[j][i],&bufferC);
 				//printf("%lf %c",sourcePro[j][i],bufferC);
 				j++;

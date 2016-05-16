@@ -9,6 +9,10 @@
 #define Number_find_pollutant 6
 #define Number_match 2
 #define Algo4_num 3
+#define Algo5_percent 60
+#define Algo5_select 10
+
+#define _Algo5_percent Algo5_percent * 0.01
 
 double data[pollutantBuffer][factorBuffer]; //output3fac_profiles
 int dataSort[pollutantBuffer][factorBuffer];
@@ -31,6 +35,9 @@ double square_min_in_factor[factorBuffer][100][2]; //index of source
 
 int match_redundant_index[factorBuffer];
 double match_redundant_data[factorBuffer][100][2]; //source only have the maximal pollutant and sort by square
+char species[sourceBuffer][100][100];
+int speciesIndex[sourceBuffer];
+
 char getOS(){
 	#if defined _WIN32 || defined _WIN64
 	return '\n';
@@ -145,7 +152,7 @@ void sortTwoArray(int len ,int ascending ,double (*array)[2]){
 }
 
 void readFile(char* argv[]){
-	FILE*fptr,*fptr2;
+	FILE *fptr, *fptr2, *fptr3;
 	char buffer[1000];
 	char bufferC = 0;
 	char *pch;
@@ -155,7 +162,7 @@ void readFile(char* argv[]){
 	// data read	
 	fptr = fopen(argv[1],"r");
     if(fptr == NULL){
-        printf("open failure");
+        printf("open output8fac_profiles failure");
         exit(-1);
     }else{
 		for(i = 0;i < 3;i++){
@@ -207,7 +214,7 @@ void readFile(char* argv[]){
 	
 	fptr2 = fopen(argv[2],"r");
 	 if(fptr2 == NULL){
-        printf("open failure");
+        printf("open source failure");
         exit(-1);
     }else{
 		bufferC = 0; 
@@ -251,8 +258,45 @@ void readFile(char* argv[]){
 			sourceCount++;
 		}
 	}
+	fptr3 = fopen(argv[3],"r");
+	 if(fptr3 == NULL){
+        printf("open species failure");
+        exit(-1);
+    }
+	bufferC = 0;
+	i = 0;
+	j = 0;
+	int nonfirst = 0;
+	while(fscanf(fptr3,"%s%c",buffer,&bufferC) != EOF){
+		//printf("%s %d\n",buffer,bufferC);
+		if (nonfirst == 1) {
+			strcat(species[i][0]," ");
+			strcat(species[i][0],buffer);
+			if (bufferC != ' '){
+				nonfirst = 0;
+				j++;
+			}
+		}
+		else if (bufferC == ' ') {
+			memset(species[i][0],'\0',sizeof(species[i][0]));
+			strcat(species[i][0],buffer);
+			nonfirst = 1;
+		}
+		else{
+			memset(species[i][j],'\0',sizeof(species[i][j]));
+			strcpy(species[i][j],buffer);
+			j++;
+			if (bufferC == token) {
+				speciesIndex[i] = j;
+				i++;
+				j = 0;
+			}
+		}
+	}
+
 	fclose(fptr);
 	fclose(fptr2);
+	fclose(fptr3);
 }
 
 int main(int argc, char* argv[])
@@ -491,6 +535,29 @@ int main(int argc, char* argv[])
     for(i=0;i<factorCount;i++)
         printf("factor %d : %s\n",i+1,sourceName[answer[i]]);
     
+	printf("\n============\nalgo.5 first phrase\n============\n\n");
+	for (i = 0;i < factorCount;i++) {
+		for (j = 0;j < Algo5_select;j++)
+			printf("%s ",pollutantName[dataSort[j][i]]);
+		puts("");
+	}
+	for (i = 0;i < factorCount;i++) {
+		printf("---factor:%d---\n",i+1);
+		for (k = 0; k < sourceCount; k++) {
+			match = 0;
+			for (j = 0;j < Algo5_select;j++){
+				for (int l = 1; l < speciesIndex[k]; l++) {
+					if (!strcmp(pollutantName[dataSort[j][i]],species[k][l])){
+						//printf("%s ",pollutantName[dataSort[j][i]]);
+						match++;
+					}
+				}
+			}
+			if (match * 1.0 /(speciesIndex[k] - 1) > _Algo5_percent)
+					printf("%s\t%.1f%(%d / %d)\n" ,species[k][0] ,(match * 1.0 /(speciesIndex[k] - 1))*100 ,match ,speciesIndex[k] - 1);
+		}
+	}
+	
     return 0;
 }
 

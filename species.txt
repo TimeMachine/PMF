@@ -1,0 +1,21 @@
+Gasoline vapor	Isobutane	Isopentane	n-Pentane
+Paint solvent	Toluene	Ethylbenzene	"m,p-Xylene"	o-Xylene
+Natural gas	Ethane	Propane
+Liquefied petroleum gas	Propane	Isobutane	n-Butane
+Gasoline	n-Pentane	Isopentane
+Biogenic emissions	Isoprene
+Dry cleaning	Toluene
+Petrochem. industry	Benzene	Toluene	Ethylbenzene	"m,p-Xylene"	o-Xylene
+Surface coatings	Toluene	Ethylbenzene	"m,p-Xylene"	o-Xylene
+Diesel exhuast	n-Decane	Toluene	Benzene	"m,p-Xylene"	o-Xylene
+Gasoline exhaust	Ethylene	Benzene	Isopentane	Toluene	n-Pentane
+Refinery operations	Benzene	Toluene	Ethylene
+Flare emissions	n-Butane	Isopentane	Ethane
+Household solvent use	Toluene	2-Methylpentane
+Hydrocarbon cracking	Ethane	Ethylene	Propane
+Hydrocarbon storage	Isopentane	Isobutane
+Lubricant refinery	Propane	Ethane	Isopentane	Toluene
+Lubricant storage	n-Butane	Propane	Isopentane
+Metallurgy	Ethane	Ethylene	Propane	Benzene	Toluene
+Electric Arc Furnace	Isobutane	n-Butane
+Rubber Manufacturing	cis-2-Butene	Cyclohexane	Isoprene

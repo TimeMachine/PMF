@@ -44,7 +44,7 @@ char getOS(){
 	#elif __APPLE__ || __MACH__
 	return '\r';
 	#else
-    return '\0';
+    return '\n';
     #endif
 }
 
@@ -537,6 +537,7 @@ int main(int argc, char* argv[])
     
 	printf("\n============\nalgo.5 first phrase\n============\n\n");
 	for (i = 0;i < factorCount;i++) {
+		printf("factor %d: ", i);
 		for (j = 0;j < Algo5_select;j++)
 			printf("%s ",pollutantName[dataSort[j][i]]);
 		puts("");

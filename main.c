@@ -555,10 +555,62 @@ int main(int argc, char* argv[])
 				}
 			}
 			if (match * 1.0 /(speciesIndex[k] - 1) > _Algo5_percent)
-					printf("%s\t%.1f%(%d / %d)\n" ,species[k][0] ,(match * 1.0 /(speciesIndex[k] - 1))*100 ,match ,speciesIndex[k] - 1);
+					printf("%s\t%.1f%%(%d / %d)\n" ,species[k][0] ,(match * 1.0 /(speciesIndex[k] - 1))*100 ,match ,speciesIndex[k] - 1);
 		}
 	}
 	
-    return 0;
+	int **algo5_answer = (int **)malloc(sizeof(int *) * factorCount);
+	int *algo5_answer_selectCount = (int *)malloc(sizeof(int) * factorCount);
+	int *algo5_source_match  = (int *)malloc(sizeof(int) * sourceCount);
+	for (i = 0; i < factorCount; i++) {
+		algo5_answer[i] = (int *)malloc(sizeof(int) * sourceCount);
+		for (j = 0; j < sourceCount; j++)
+			algo5_answer[i][j] = -1;
+	}
+    memset(algo5_answer_selectCount,0,sizeof(int) * factorCount);
+    memset(algo5_source_match,0,sizeof(int) * sourceCount);
+
+	for (i = 2; i <= 10;i++) {
+		for (j = 0;j < factorCount; j++) {
+			if (algo5_answer_selectCount[j] != 0)
+				continue;
+			for (k = 0; k < sourceCount; k++) {
+				if (algo5_source_match[k])
+					continue;
+				match = 0;
+				for (int select = 0; select < i; select++) {
+					for (int sp = 1; sp < speciesIndex[k]; sp++) {
+						if (!strcmp(pollutantName[dataSort[select][j]],species[k][sp])){
+							match++;
+						}
+					}
+				}
+				if (match * 1.0 /(speciesIndex[k] - 1) == 1) {
+					algo5_answer[j][algo5_answer_selectCount[j]] = k;
+					algo5_answer_selectCount[j]++;
+					algo5_source_match[k] = 1;
+					break;
+				}
+			}
+			if (algo5_answer_selectCount[j] > 1){
+				;
+				/* 如果在同樣物種數時對應到，即以algo4的方法配置污染源
+				 * algo5_answer[j][0 ~ algo5_answer_selectCount[j]] has the same pollutant count.
+				 * algo5_answer_selectCount[k] had been matched.
+				 * goto algo4;
+				 */
+			}
+		}	
+	}
+	for (i = 0; i < factorCount; i++)
+		if (algo5_answer_selectCount[i] != 0)
+			printf("%d\t:%s\n",i,species[algo5_answer[i][0]][0]);
+		else {
+			;
+			/*剩餘沒有對到/對到但搶輸別個factor的factor，使用剩下的污染源做algo4判定。 
+			 *goto algo4;
+			 */
+		}
+	return 0;
 }
 
